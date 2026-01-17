@@ -3,219 +3,457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista Tareas WhatsApp</title>
+    <title>Tareas WhatsApp Compartida v2.0</title>
+    <link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;Tareas WhatsApp&quot;,&quot;short_name&quot;:&quot;TareasWA&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;scope&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;theme_color&quot;:&quot;#ff6b00&quot;,&quot;background_color&quot;:&quot;#0f0f0f&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiNGRjZCODAiLz4KPHBhdGggZD0iTTExMiAxMjhIMTYwVjEyOEgxMTJaTTY0IDg4SDIwOFY4OEg2NFpNNDggMTI4SDIwOFYxMjhINFpNMTI4IDY0SDIwOFY2NEgxMjhaIiBmaWxsPSIjMUExQTFBIi8+Cjwvc3ZnPgo=&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-primary: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            --bg-glass: rgba(26, 26, 26, 0.95);
+            --accent-main: #ff6b00;
+            --accent-hover: #ff8c00;
+            --accent-light: #ffab70;
+            --text-primary: #ffffff;
+            --text-muted: #ff8c00;
+            --border-accent: rgba(255, 107, 0, 0.3);
         }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
-        
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
+        .app-container { display: flex; height: 100vh; position: relative; }
+        .sidebar {
+            width: 320px;
+            max-width: 90vw;
+            background: var(--bg-glass);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid var(--border-accent);
+            padding: 24px;
+            overflow-y: auto;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 20;
         }
-        
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #ff6b00;
-            font-size: 2em;
-        }
-        
-        .input-container {
+        .main-content {
+            flex: 1;
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 24px;
+        }
+        .header {
+            background: rgba(255, 107, 0, 0.12);
+            backdrop-filter: blur(12px);
+            padding: 24px;
+            border-radius: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+            border: 1px solid var(--border-accent);
+            box-shadow: 0 8px 32px rgba(255, 107, 0, 0.1);
+        }
+        .header h1 { color: var(--accent-main); font-size: clamp(1.5rem, 5vw, 2.25rem); font-weight: 700; margin-bottom: 8px; }
+        .user-greeting { color: var(--accent-light); font-size: 1.1rem; }
+        .tabs-container { display: flex; gap: 12px; margin-bottom: 24px; }
+        .tab-button {
+            flex: 1;
+            padding: 16px 20px;
+            background: rgba(255, 107, 0, 0.08);
+            border: 1px solid var(--border-accent);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .tab-button.active {
+            background: var(--accent-main);
+            color: #0f0f0f;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(255, 107, 0, 0.3);
+        }
+        .task-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 8px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-main) transparent;
+        }
+        .task-list::-webkit-scrollbar { width: 6px; }
+        .task-list::-webkit-scrollbar-track { background: transparent; }
+        .task-list::-webkit-scrollbar-thumb {
+            background: var(--accent-main);
+            border-radius: 3px;
+        }
+        .task-item {
+            background: rgba(26, 26, 26, 0.6);
+            margin-bottom: 16px;
+            padding: 20px;
+            border-radius: 20px;
+            border-left: 5px solid var(--accent-main);
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .task-item:hover { transform: translateX(4px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4); }
+        .task-item.completed {
+            opacity: 0.65;
+            border-left-color: #666;
+            background: rgba(102, 102, 102, 0.2);
+        }
+        .task-checkbox {
+            width: 24px; height: 24px;
+            accent-color: var(--accent-main);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .task-content { flex: 1; min-width: 0; }
+        .task-title { font-size: 1.05rem; font-weight: 500; margin-bottom: 4px; word-break: break-word; }
+        .task-meta {
+            font-size: 0.85rem;
+            color: var(--accent-light);
+            font-weight: 400;
+        }
+        .input-section {
+            display: flex;
+            gap: 12px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 107, 0, 0.2);
+        }
+        .task-input {
+            flex: 1;
+            padding: 18px 24px;
+            border: 2px solid var(--border-accent);
+            border-radius: 28px;
+            background: rgba(15, 15, 15, 0.85);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s;
+        }
+        .task-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .task-input:focus {
+            outline: none;
+            border-color: var(--accent-main);
+            box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
+        }
+        .add-button {
+            padding: 18px 28px;
+            background: linear-gradient(135deg, var(--accent-main), var(--accent-hover));
+            border: none;
+            border-radius: 28px;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 8px 24px rgba(255, 107, 0, 0.3);
+        }
+        .add-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 16px 32px rgba(255, 107, 0, 0.4);
+        }
+        .config-section {
+            margin-bottom: 32px;
+            padding: 24px;
+            background: rgba(255, 107, 0, 0.08);
+            border-radius: 20px;
+            border: 1px solid var(--border-accent);
+            backdrop-filter: blur(12px);
+        }
+        .config-section h3 { color: var(--accent-main); margin-bottom: 16px; font-size: 1.1rem; font-weight: 600; }
+        .config-field {
             margin-bottom: 20px;
         }
-        
-        #taskInput {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #ff6b00;
-            border-radius: 8px;
-            font-size: 16px;
-            background: #2d2d2d;
-            color: #fff;
+        .config-field label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.95rem;
         }
-        
-        #taskInput:focus {
+        .config-field input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border-accent);
+            border-radius: 14px;
+            background: rgba(15, 15, 15, 0.8);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+        .config-field input:focus {
             outline: none;
-            border-color: #ff8c33;
+            border-color: var(--accent-main);
+            box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15);
         }
-        
-        button {
-            padding: 15px 25px;
-            background: #ff6b00;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-        
-        button:hover {
-            background: #ff8c33;
-        }
-        
-        #taskList {
-            list-style: none;
-        }
-        
-        .task-item {
-            background: #2d2d2d;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 4px solid #ff6b00;
-            transition: transform 0.2s;
-        }
-        
-        .task-item:hover {
-            transform: translateX(5px);
-        }
-        
-        .task-item.completed {
-            opacity: 0.6;
-            border-left-color: #4caf50;
-        }
-        
-        .task-item.completed .task-text {
-            text-decoration: line-through;
-        }
-        
-        .task-text {
-            flex: 1;
-            cursor: pointer;
-        }
-        
-        .delete-btn {
-            padding: 8px 15px;
-            background: #e74c3c;
-            font-size: 14px;
-        }
-        
-        .delete-btn:hover {
-            background: #c0392b;
-        }
-        
+        .stats-section h4 { color: var(--accent-light); margin-bottom: 12px; font-size: 1rem; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.9rem; }
+        .stat-item { text-align: center; padding: 12px; background: rgba(255, 107, 0, 0.05); border-radius: 12px; border: 1px solid var(--border-accent); }
+        .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--accent-main); display: block; }
         .empty-state {
             text-align: center;
-            padding: 40px;
-            color: #888;
+            padding: 60px 24px;
+            color: rgba(255, 255, 255, 0.6);
         }
+        .empty-state-icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.5; }
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: 0; top: 0; height: 100vh; transform: translateX(-100%); z-index: 100; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { padding: 20px 16px; }
+            .tabs-container { margin-bottom: 20px; }
+        }
+        .menu-toggle { position: absolute; top: 24px; left: 24px; z-index: 101; background: none; border: none; font-size: 1.5rem; color: var(--accent-main); cursor: pointer; padding: 8px; border-radius: 12px; transition: all 0.3s; }
+        .menu-toggle:hover { background: rgba(255, 107, 0, 0.1); transform: scale(1.1); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📋 Lista de Tareas</h1>
+    <div class="app-container">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
         
-        <div class="input-container">
-            <input type="text" id="taskInput" placeholder="Escribe una nueva tarea..." />
-            <button onclick="addTask()">Añadir</button>
+        <div class="sidebar" id="sidebar">
+            <div class="config-section">
+                <h3>👤 Tu perfil</h3>
+                <div class="config-field">
+                    <label>Nombre:</label>
+                    <input type="text" id="userName" placeholder="Ej: Juan Pérez">
+                </div>
+                <div class="config-field">
+                    <label>WhatsApp destinatario:</label>
+                    <input type="tel" id="whatsappNumber" placeholder="Ej: +34612345678">
+                </div>
+                <button class="add-button" onclick="saveConfig()" style="width: 100%; margin-top: 12px;">💾 Guardar</button>
+            </div>
+            
+            <div class="stats-section">
+                <h4>📊 Estadísticas</h4>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalTasks">0</span>
+                        Total
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="completedTasks">0</span>
+                        Completadas
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <ul id="taskList"></ul>
-        <div id="emptyState" class="empty-state">No hay tareas. ¡Añade una para empezar!</div>
+        <div class="main-content">
+            <div class="header">
+                <h1>📱 Tareas WhatsApp</h1>
+                <p id="userGreeting" class="user-greeting">Configura tu perfil</p>
+            </div>
+            
+            <div class="tabs-container">
+                <div class="tab-button active" data-tab="pending" onclick="switchTab('pending')">
+                    ⏳ Pendientes
+                </div>
+                <div class="tab-button" data-tab="completed" onclick="switchTab('completed')">
+                    ✅ Completadas
+                </div>
+            </div>
+            
+            <div class="task-list" id="taskList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <p>No hay tareas en esta sección</p>
+                    <p style="font-size: 0.9rem; margin-top: 8px;">Añade tu primera tarea abajo</p>
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <input type="text" class="task-input" id="newTaskInput" placeholder="¿Qué tarea vas a completar hoy?..." />
+                <button class="add-button" onclick="addTask()">➕</button>
+            </div>
+        </div>
     </div>
-    
+
     <script>
         let tasks = [];
+        let currentUser = {};
+        let currentTab = 'pending';
         
-        // Cargar tareas del localStorage
-        function loadTasks() {
-            const savedTasks = localStorage.getItem('tasks');
-            if (savedTasks) {
-                tasks = JSON.parse(savedTasks);
-                renderTasks();
-            }
+        function initApp() {
+            loadData();
+            renderTasks();
+            updateStats();
+            updateGreeting();
         }
         
-        // Guardar tareas en localStorage
-        function saveTasks() {
-            localStorage.setItem('tasks', JSON.stringify(tasks));
+        function loadData() {
+            currentUser = JSON.parse(localStorage.getItem('whatsappUser')) || {};
+            tasks = JSON.parse(localStorage.getItem('whatsappTasks')) || [];
         }
         
-        // Añadir tarea
-        function addTask() {
-            const input = document.getElementById('taskInput');
-            const taskText = input.value.trim();
+        function saveData() {
+            localStorage.setItem('whatsappUser', JSON.stringify(currentUser));
+            localStorage.setItem('whatsappTasks', JSON.stringify(tasks));
+        }
+        
+        function saveConfig() {
+            currentUser.name = document.getElementById('userName').value.trim() || 'Usuario';
+            currentUser.whatsapp = document.getElementById('whatsappNumber').value.trim();
             
-            if (taskText === '') {
-                alert('Por favor, escribe una tarea');
+            if (!currentUser.whatsapp) {
+                alert('⚠️ Añade el número de WhatsApp del destinatario');
                 return;
             }
             
-            tasks.push({
+            saveData();
+            updateGreeting();
+            showNotification('✅ Configuración guardada');
+        }
+        
+        function updateGreeting() {
+            const greeting = document.getElementById('userGreeting');
+            if (currentUser.name) {
+                greeting.textContent = `¡Hola, ${currentUser.name}!`;
+            } else {
+                greeting.textContent = 'Configura tu perfil →';
+            }
+        }
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTasks();
+        }
+        
+        function addTask() {
+            const input = document.getElementById('newTaskInput');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            tasks.unshift({
                 id: Date.now(),
-                text: taskText,
-                completed: false
+                text: text,
+                completed: false,
+                completedBy: currentUser.name || 'Usuario',
+                completedAt: '',
+                createdAt: new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
             });
             
             input.value = '';
-            saveTasks();
+            saveData();
             renderTasks();
+            updateStats();
+            showNotification('➕ Tarea añadida');
         }
         
-        // Alternar estado completado
         function toggleTask(id) {
-            tasks = tasks.map(task => 
-                task.id === id ? {...task, completed: !task.completed} : task
-            );
-            saveTasks();
-            renderTasks();
-        }
-        
-        // Eliminar tarea
-        function deleteTask(id) {
-            tasks = tasks.filter(task => task.id !== id);
-            saveTasks();
-            renderTasks();
-        }
-        
-        // Renderizar tareas
-        function renderTasks() {
-            const taskList = document.getElementById('taskList');
-            const emptyState = document.getElementById('emptyState');
+            const task = tasks.find(t => t.id === id);
+            if (!task || task.completed) return;
             
-            if (tasks.length === 0) {
-                taskList.innerHTML = '';
-                emptyState.style.display = 'block';
+            task.completed = true;
+            task.completedBy = currentUser.name || 'Usuario';
+            task.completedAt = new Date().toLocaleString('es-ES');
+            
+            sendWhatsApp(task);
+            
+            saveData();
+            renderTasks();
+            updateStats();
+            showNotification('✅ Tarea completada y notificación enviada');
+        }
+        
+        function sendWhatsApp(task) {
+            const message = `✅ *${task.completedBy} completó una tarea*\n\n📝 *${task.text}*\n⏰ ${task.completedAt}`;
+            const phone = currentUser.whatsapp.replace(/[^\d+]/g, '');
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+        
+        function renderTasks() {
+            const container = document.getElementById('taskList');
+            const filteredTasks = tasks.filter(task => 
+                currentTab === 'pending' ? !task.completed : task.completed
+            );
+            
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>No hay tareas ${currentTab === 'pending' ? 'pendientes' : 'completadas'}</p>
+                        <p style="font-size: 0.9rem; margin-top: 8px;">
+                            ${currentTab === 'pending' ? '¡Añade tu primera!' : '¡Marca alguna para verla aquí!'}
+                        </p>
+                    </div>
+                `;
                 return;
             }
             
-            emptyState.style.display = 'none';
-            
-            taskList.innerHTML = tasks.map(task => `
-                <li class="task-item ${task.completed ? 'completed' : ''}">
-                    <span class="task-text" onclick="toggleTask(${task.id})">${task.text}</span>
-                    <button class="delete-btn" onclick="deleteTask(${task.id})">Eliminar</button>
-                </li>
+            container.innerHTML = filteredTasks.map(task => `
+                <div class="task-item ${task.completed ? 'completed' : ''}" onclick="if (!this.classList.contains('completed')) toggleTask(${task.id})">
+                    <input type="checkbox" class="task-checkbox" 
+                           ${task.completed ? 'checked disabled' : ''} 
+                           onchange="toggleTask(${task.id})"
+                           style="cursor: ${task.completed ? 'default' : 'pointer'}">
+                    
+                    <div class="task-content">
+                        <div class="task-title">${escapeHtml(task.text)}</div>
+                        <div class="task-meta">
+                            ${task.createdAt ? `Creada: ${task.createdAt}` : ''}
+                            ${task.completedAt ? ` • Completada: ${task.completedAt}` : ''}
+                            ${task.completedBy ? `por ${task.completedBy}` : ''}
+                        </div>
+                    </div>
+                </div>
             `).join('');
         }
         
-        // Permitir añadir con Enter
-        document.getElementById('taskInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addTask();
-            }
+        function updateStats() {
+            document.getElementById('totalTasks').textContent = tasks.length;
+            document.getElementById('completedTasks').textContent = tasks.filter(t => t.completed).length;
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed; top: 24px; right: 24px; background: rgba(0, 255, 0, 0.9);
+                color: white; padding: 16px 24px; border-radius: 20px; font-weight: 600;
+                z-index: 1000; transform: translateX(400px); transition: all 0.3s;
+                box-shadow: 0 12px 32px rgba(0, 255, 0, 0.3); font-size: 0.95rem;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+            setTimeout(() => {
+                notification.style.transform = 'translateX(400px)';
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+        
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        document.getElementById('newTaskInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') addTask();
         });
         
-        // Cargar tareas al iniciar
-        loadTasks();
+        initApp();
     </script>
 </body>
 </html>
