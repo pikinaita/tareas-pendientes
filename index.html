@@ -1,459 +1,265 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tareas Pendientes</title>
-    <link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;Tareas Pendientes&quot;,&quot;short_name&quot;:&quot;TareasWA&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;scope&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;theme_color&quot;:&quot;#ff6b00&quot;,&quot;background_color&quot;:&quot;#0f0f0f&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiNGRjZCODAiLz4KPHBhdGggZD0iTTExMiAxMjhIMTYwVjEyOEgxMTJaTTY0IDg4SDIwOFY4OEg2NFpNNDggMTI4SDIwOFYxMjhINFpNMTI4IDY0SDIwOFY2NEgxMjhaIiBmaWxsPSIjMUExQTFBIi8+Cjwvc3ZnPgo=&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
-    <style>
-        :root {
-            --bg-primary: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
-            --bg-glass: rgba(26, 26, 26, 0.95);
-            --accent-main: #ff6b00;
-            --accent-hover: #ff8c00;
-            --accent-light: #ffab70;
-            --text-primary: #ffffff;
-            --text-muted: #ff8c00;
-            --border-accent: rgba(255, 107, 0, 0.3);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            height: 100vh;
-            overflow: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-        .app-container { display: flex; height: 100vh; position: relative; }
-        .sidebar {
-            width: 320px;
-            max-width: 90vw;
-            background: var(--bg-glass);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border-right: 1px solid var(--border-accent);
-            padding: 24px;
-            overflow-y: auto;
-            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            z-index: 20;
-        }
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            padding: 24px;
-        }
-        .header {
-            background: rgba(255, 107, 0, 0.12);
-            backdrop-filter: blur(12px);
-            padding: 24px;
-            border-radius: 24px;
-            margin-bottom: 24px;
-            text-align: center;
-            border: 1px solid var(--border-accent);
-            box-shadow: 0 8px 32px rgba(255, 107, 0, 0.1);
-        }
-        .header h1 { color: var(--accent-main); font-size: clamp(1.5rem, 5vw, 2.25rem); font-weight: 700; margin-bottom: 8px; }
-        .user-greeting { color: var(--accent-light); font-size: 1.1rem; }
-        .tabs-container { display: flex; gap: 12px; margin-bottom: 24px; }
-        .tab-button {
-            flex: 1;
-            padding: 16px 20px;
-            background: rgba(255, 107, 0, 0.08);
-            border: 1px solid var(--border-accent);
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        .tab-button.active {
-            background: var(--accent-main);
-            color: #0f0f0f;
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(255, 107, 0, 0.3);
-        }
-        .task-list {
-            flex: 1;
-            overflow-y: auto;
-            padding-right: 8px;
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent-main) transparent;
-        }
-        .task-list::-webkit-scrollbar { width: 6px; }
-        .task-list::-webkit-scrollbar-track { background: transparent; }
-        .task-list::-webkit-scrollbar-thumb {
-            background: var(--accent-main);
-            border-radius: 3px;
-        }
-        .task-item {
-            background: rgba(26, 26, 26, 0.6);
-            margin-bottom: 16px;
-            padding: 20px;
-            border-radius: 20px;
-            border-left: 5px solid var(--accent-main);
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            cursor: pointer;
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .task-item:hover { transform: translateX(4px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4); }
-        .task-item.completed {
-            opacity: 0.65;
-            border-left-color: #666;
-            background: rgba(102, 102, 102, 0.2);
-        }
-        .task-checkbox {
-            width: 24px; height: 24px;
-            accent-color: var(--accent-main);
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-        .task-content { flex: 1; min-width: 0; }
-        .task-title { font-size: 1.05rem; font-weight: 500; margin-bottom: 4px; word-break: break-word; }
-        .task-meta {
-            font-size: 0.85rem;
-            color: var(--accent-light);
-            font-weight: 400;
-        }
-        .input-section {
-            display: flex;
-            gap: 12px;
-            padding-top: 24px;
-            border-top: 1px solid rgba(255, 107, 0, 0.2);
-        }
-        .task-input {
-            flex: 1;
-            padding: 18px 24px;
-            border: 2px solid var(--border-accent);
-            border-radius: 28px;
-            background: rgba(15, 15, 15, 0.85);
-            color: var(--text-primary);
-            font-size: 16px;
-            font-family: inherit;
-            backdrop-filter: blur(12px);
-            transition: all 0.3s;
-        }
-        .task-input::placeholder { color: rgba(255, 255, 255, 0.5); }
-        .task-input:focus {
-            outline: none;
-            border-color: var(--accent-main);
-            box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
-        }
-        .add-button {
-            padding: 18px 28px;
-            background: linear-gradient(135deg, var(--accent-main), var(--accent-hover));
-            border: none;
-            border-radius: 28px;
-            color: white;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            box-shadow: 0 8px 24px rgba(255, 107, 0, 0.3);
-        }
-        .add-button:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 16px 32px rgba(255, 107, 0, 0.4);
-        }
-        .config-section {
-            margin-bottom: 32px;
-            padding: 24px;
-            background: rgba(255, 107, 0, 0.08);
-            border-radius: 20px;
-            border: 1px solid var(--border-accent);
-            backdrop-filter: blur(12px);
-        }
-        .config-section h3 { color: var(--accent-main); margin-bottom: 16px; font-size: 1.1rem; font-weight: 600; }
-        .config-field {
-            margin-bottom: 20px;
-        }
-        .config-field label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-primary);
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-        .config-field input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1px solid var(--border-accent);
-            border-radius: 14px;
-            background: rgba(15, 15, 15, 0.8);
-            color: var(--text-primary);
-            font-size: 16px;
-            font-family: inherit;
-            transition: all 0.3s;
-        }
-        .config-field input:focus {
-            outline: none;
-            border-color: var(--accent-main);
-            box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15);
-        }
-        .stats-section h4 { color: var(--accent-light); margin-bottom: 12px; font-size: 1rem; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.9rem; }
-        .stat-item { text-align: center; padding: 12px; background: rgba(255, 107, 0, 0.05); border-radius: 12px; border: 1px solid var(--border-accent); }
-        .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--accent-main); display: block; }
-        .empty-state {
-            text-align: center;
-            padding: 60px 24px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-        .empty-state-icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.5; }
-        @media (max-width: 768px) {
-            .sidebar { position: fixed; left: 0; top: 0; height: 100vh; transform: translateX(-100%); z-index: 100; }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { padding: 20px 16px; }
-            .tabs-container { margin-bottom: 20px; }
-        }
-        .menu-toggle { position: absolute; top: 24px; left: 24px; z-index: 101; background: none; border: none; font-size: 1.5rem; color: var(--accent-main); cursor: pointer; padding: 8px; border-radius: 12px; transition: all 0.3s; }
-        .menu-toggle:hover { background: rgba(255, 107, 0, 0.1); transform: scale(1.1); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tareas Pendientes</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ff6b00">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tareas">
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiNGRjZCODAiLz4KPHBhdGggZD0iTTExMiAxMjhIMTYwVjEyOEgxMTJaTTY0IDg4SDIwOFY4OEg2NFpNNDggMTI4SDIwOFYxMjhINFpNMTI4IDY0SDIwOFY2NEgxMjhaIiBmaWxsPSIjMUExQTFBIi8+Cjwvc3ZnPgo=">
+  <style>
+    :root {
+      --bg-primary: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+      --bg-glass: rgba(26, 26, 26, 0.95);
+      --accent-main: #ff6b00;
+      --accent-hover: #ff8c00;
+      --accent-light: #ffab70;
+      --text-primary: #ffffff;
+      --text-muted: #ff8c00;
+      --border-accent: rgba(255, 107, 0, 0.3);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    .app-container { display: flex; height: 100vh; position: relative; }
+    .sidebar {
+      width: 320px;
+      max-width: 90vw;
+      background: var(--bg-glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid var(--border-accent);
+      padding: 24px;
+      overflow-y: auto;
+      transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      z-index: 200;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 20px;
+      padding-top: 60px;
+    }
+    .header {
+      background: rgba(255, 107, 0, 0.12);
+      backdrop-filter: blur(12px);
+      padding: 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+      border: 1px solid var(--border-accent);
+    }
+    .header h1 { color: var(--accent-main); font-size: 1.5rem; font-weight: 700; }
+    .tabs-container { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab-button {
+      flex: 1;
+      padding: 12px;
+      background: rgba(255, 107, 0, 0.08);
+      border: 1px solid var(--border-accent);
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: white;
+    }
+    .tab-button.active {
+      background: var(--accent-main);
+      color: #0f0f0f;
+    }
+    .task-list {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 80px;
+    }
+    .task-item {
+      background: rgba(255, 255, 255, 0.05);
+      margin-bottom: 12px;
+      padding: 16px;
+      border-radius: 16px;
+      border-left: 4px solid var(--accent-main);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .task-item.completed { opacity: 0.5; border-left-color: #666; }
+    .task-checkbox { width: 22px; height: 22px; accent-color: var(--accent-main); }
+    .task-content { flex: 1; }
+    .task-title { font-size: 1rem; margin-bottom: 2px; }
+    .task-meta { font-size: 0.75rem; color: var(--accent-light); }
+    .input-section {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+    }
+    .task-input {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: 24px;
+      border: 2px solid var(--border-accent);
+      background: rgba(15, 15, 15, 0.9);
+      color: white;
+      font-size: 16px;
+    }
+    .add-button {
+      width: 50px; height: 50px;
+      background: var(--accent-main);
+      border: none;
+      border-radius: 25px;
+      color: white;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .menu-toggle {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      z-index: 210;
+      background: rgba(255, 107, 0, 0.2);
+      border: none;
+      color: var(--accent-main);
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      font-size: 1.2rem;
+    }
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+    }
+  </style>
 </head>
 <body>
-    <div class="app-container">
-        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-        
-        <div class="sidebar" id="sidebar">
-            <div class="config-section">
-                <h3>👤 Tu perfil</h3>
-                <div class="config-field">
-                    <label>Nombre:</label>
-                    <input type="text" id="userName" placeholder="Ej: Juan Pérez">
-                </div>
-                <div class="config-field">
-                    <label>WhatsApp destinatario:</label>
-                    <input type="tel" id="whatsappNumber" placeholder="Ej: +34612345678">
-                </div>
-                <button class="add-button" onclick="saveConfig()" style="width: 100%; margin-top: 12px;">💾 Guardar</button>
-            </div>
-            
-            <div class="stats-section">
-                <h4>📊 Estadísticas</h4>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-number" id="totalTasks">0</span>
-                        Total
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number" id="completedTasks">0</span>
-                        Completadas
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="main-content">
-            <div class="header">
-                <h1>📱 Tareas Pendientes</h1>
-                <p id="userGreeting" class="user-greeting">Configura tu perfil</p>
-            </div>
-            
-            <div class="tabs-container">
-                <div class="tab-button active" data-tab="pending" onclick="switchTab('pending')">
-                    ⏳ Pendientes
-                </div>
-                <div class="tab-button" data-tab="completed" onclick="switchTab('completed')">
-                    ✅ Completadas
-                </div>
-            </div>
-            
-            <div class="task-list" id="taskList">
-                <div class="empty-state">
-                    <div class="empty-state-icon">📝</div>
-                    <p>No hay tareas en esta sección</p>
-                    <p style="font-size: 0.9rem; margin-top: 8px;">Añade tu primera tarea abajo</p>
-                </div>
-            </div>
-            
-            <div class="input-section">
-                <input type="text" class="task-input" id="newTaskInput" placeholder="¿Qué tarea vas a completar hoy?..." />
-                <button class="add-button" onclick="addTask()">➕</button>
-            </div>
-        </div>
+  <div class="app-container">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    
+    <div class="sidebar" id="sidebar">
+      <h3>👤 Perfil</h3>
+      <input type="text" id="userName" placeholder="Tu nombre" style="width:100%; padding:10px; margin:10px 0; border-radius:8px; background:#000; border:1px solid #333; color:#fff;">
+      <input type="tel" id="whatsappNumber" placeholder="+34..." style="width:100%; padding:10px; margin:10px 0; border-radius:8px; background:#000; border:1px solid #333; color:#fff;">
+      <button onclick="saveConfig()" style="width:100%; padding:12px; background:var(--accent-main); border:none; border-radius:10px; color:#000; font-weight:700; margin-top:10px;">Guardar</button>
+      
+      <div style="margin-top:30px;">
+        <h4>📊 Estadísticas</h4>
+        <p>Total: <span id="totalTasks">0</span></p>
+        <p>Hechas: <span id="completedTasks">0</span></p>
+      </div>
     </div>
 
-    <script>
-        let tasks = [];
-        let currentUser = {};
-        let currentTab = 'pending';
-        
-        function initApp() {
-            loadData();
-            renderTasks();
-            updateStats();
-            updateGreeting();
+    <div class="main-content">
+      <div class="header">
+        <h1>Tareas Pendientes</h1>
+        <p id="userGreeting" style="font-size:0.8rem; color:var(--accent-light);">Cargando...</p>
+      </div>
+
+      <div class="tabs-container">
+        <button class="tab-button active" onclick="switchTab('pending', this)">Pendientes</button>
+        <button class="tab-button" onclick="switchTab('completed', this)">Hechas</button>
+      </div>
+
+      <div class="task-list" id="taskList"></div>
+
+      <div class="input-section">
+        <input type="text" class="task-input" id="newTaskInput" placeholder="Nueva tarea...">
+        <button class="add-button" onclick="addTask()">+</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => console.log('SW ok')).catch(err => console.log('SW error', err));
+      });
+    }
+
+    let tasks = JSON.parse(localStorage.getItem('whatsappTasks')) || [];
+    let currentUser = JSON.parse(localStorage.getItem('whatsappUser')) || { name: '', whatsapp: '' };
+    let currentTab = 'pending';
+
+    function saveConfig() {
+      currentUser.name = document.getElementById('userName').value;
+      currentUser.whatsapp = document.getElementById('whatsappNumber').value;
+      localStorage.setItem('whatsappUser', JSON.stringify(currentUser));
+      updateGreeting();
+      toggleSidebar();
+    }
+
+    function updateGreeting() {
+      document.getElementById('userGreeting').textContent = currentUser.name ? `Hola, ${currentUser.name}` : 'Configura tu perfil';
+      document.getElementById('userName').value = currentUser.name;
+      document.getElementById('whatsappNumber').value = currentUser.whatsapp;
+    }
+
+    function switchTab(tab, el) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      renderTasks();
+    }
+
+    function addTask() {
+      const input = document.getElementById('newTaskInput');
+      if (!input.value) return;
+      tasks.unshift({ id: Date.now(), text: input.value, completed: false, date: new Date().toLocaleString() });
+      input.value = '';
+      save();
+    }
+
+    function toggleTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (task && !task.completed) {
+        task.completed = true;
+        task.completedAt = new Date().toLocaleString();
+        if (currentUser.whatsapp) {
+          const msg = `✅ *Hecho:* ${task.text}
+⏰ ${task.completedAt}`;
+          window.open(`https://wa.me/${currentUser.whatsapp.replace(/\+/g,'')}?text=${encodeURIComponent(msg)}`, '_blank');
         }
-        
-        function loadData() {
-            currentUser = JSON.parse(localStorage.getItem('whatsappUser')) || {};
-            tasks = JSON.parse(localStorage.getItem('whatsappTasks')) || [];
-        }
-        
-        function saveData() {
-            localStorage.setItem('whatsappUser', JSON.stringify(currentUser));
-            localStorage.setItem('whatsappTasks', JSON.stringify(tasks));
-        }
-        
-        function saveConfig() {
-            currentUser.name = document.getElementById('userName').value.trim() || 'Usuario';
-            currentUser.whatsapp = document.getElementById('whatsappNumber').value.trim();
-            
-            if (!currentUser.whatsapp) {
-                alert('⚠️ Añade el número de WhatsApp del destinatario');
-                return;
-            }
-            
-            saveData();
-            updateGreeting();
-            showNotification('✅ Configuración guardada');
-        }
-        
-        function updateGreeting() {
-            const greeting = document.getElementById('userGreeting');
-            if (currentUser.name) {
-                greeting.textContent = `¡Hola, ${currentUser.name}!`;
-            } else {
-                greeting.textContent = 'Configura tu perfil →';
-            }
-        }
-        
-        function switchTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            renderTasks();
-        }
-        
-        function addTask() {
-            const input = document.getElementById('newTaskInput');
-            const text = input.value.trim();
-            
-            if (!text) return;
-            
-            tasks.unshift({
-                id: Date.now(),
-                text: text,
-                completed: false,
-                completedBy: currentUser.name || 'Usuario',
-                completedAt: '',
-                createdAt: new Date().toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })
-            });
-            
-            input.value = '';
-            saveData();
-            renderTasks();
-            updateStats();
-            showNotification('➕ Tarea añadida');
-        }
-        
-        function toggleTask(id) {
-            const task = tasks.find(t => t.id === id);
-            if (!task || task.completed) return;
-            
-            task.completed = true;
-            task.completedBy = currentUser.name || 'Usuario';
-            task.completedAt = new Date().toLocaleString('es-ES');
-            
-            sendWhatsApp(task);
-            
-            saveData();
-            renderTasks();
-            updateStats();
-            showNotification('✅ Tarea completada y notificación enviada');
-        }
-        
-        function sendWhatsApp(task) {
-            const message = `✅ *${task.completedBy} completó una tarea*\n\n📝 *${task.text}*\n⏰ ${task.completedAt}`;
-            const phone = currentUser.whatsapp.replace(/[^\d+]/g, '');
-            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
-        }
-        
-        function renderTasks() {
-            const container = document.getElementById('taskList');
-            const filteredTasks = tasks.filter(task => 
-                currentTab === 'pending' ? !task.completed : task.completed
-            );
-            
-            if (filteredTasks.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <p>No hay tareas ${currentTab === 'pending' ? 'pendientes' : 'completadas'}</p>
-                        <p style="font-size: 0.9rem; margin-top: 8px;">
-                            ${currentTab === 'pending' ? '¡Añade tu primera!' : '¡Marca alguna para verla aquí!'}
-                        </p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = filteredTasks.map(task => `
-                <div class="task-item ${task.completed ? 'completed' : ''}" onclick="if (!this.classList.contains('completed')) toggleTask(${task.id})">
-                    <input type="checkbox" class="task-checkbox" 
-                           ${task.completed ? 'checked disabled' : ''} 
-                           onchange="toggleTask(${task.id})"
-                           style="cursor: ${task.completed ? 'default' : 'pointer'}">
-                    
-                    <div class="task-content">
-                        <div class="task-title">${escapeHtml(task.text)}</div>
-                        <div class="task-meta">
-                            ${task.createdAt ? `Creada: ${task.createdAt}` : ''}
-                            ${task.completedAt ? ` • Completada: ${task.completedAt}` : ''}
-                            ${task.completedBy ? `por ${task.completedBy}` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        function updateStats() {
-            document.getElementById('totalTasks').textContent = tasks.length;
-            document.getElementById('completedTasks').textContent = tasks.filter(t => t.completed).length;
-        }
-        
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('open');
-        }
-        
-        function showNotification(message) {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed; top: 24px; right: 24px; background: rgba(0, 255, 0, 0.9);
-                color: white; padding: 16px 24px; border-radius: 20px; font-weight: 600;
-                z-index: 1000; transform: translateX(400px); transition: all 0.3s;
-                box-shadow: 0 12px 32px rgba(0, 255, 0, 0.3); font-size: 0.95rem;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-            setTimeout(() => {
-                notification.style.transform = 'translateX(400px)';
-                setTimeout(() => document.body.removeChild(notification), 300);
-            }, 3000);
-        }
-        
-        function escapeHtml(text) {
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, m => map[m]);
-        }
-        
-        document.getElementById('newTaskInput').addEventListener('keypress', e => {
-            if (e.key === 'Enter') addTask();
-        });
-        
-        initApp();
-    </script>
+        save();
+      }
+    }
+
+    function save() {
+      localStorage.setItem('whatsappTasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const list = document.getElementById('taskList');
+      const filtered = tasks.filter(t => currentTab === 'pending' ? !t.completed : t.completed);
+      list.innerHTML = filtered.map(t => `
+        <div class="task-item ${t.completed ? 'completed' : ''}">
+          <input type="checkbox" class="task-checkbox" ${t.completed ? 'checked disabled' : ''} onchange="toggleTask(${t.id})">
+          <div class="task-content">
+            <div class="task-title">${t.text}</div>
+            <div class="task-meta">${t.date}</div>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('totalTasks').textContent = tasks.length;
+      document.getElementById('completedTasks').textContent = tasks.filter(t => t.completed).length;
+    }
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    
+    updateGreeting();
+    renderTasks();
+  </script>
 </body>
 </html>
